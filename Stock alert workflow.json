@@ -1,0 +1,226 @@
+{
+  "name": "Stock alert workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        16
+      ],
+      "id": "454c9771-8fd3-4912-8573-604ea89412fb",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "45ca8d4a-8cb6-4119-882f-9c18c496a5e9",
+              "name": "Product name",
+              "value": "coconut oil 1L",
+              "type": "string"
+            },
+            {
+              "id": "73b4ec93-be87-4318-8834-fc0e702e90c3",
+              "name": "Stock",
+              "value": 5,
+              "type": "number"
+            },
+            {
+              "id": "70fbe495-ab08-4a0b-95f9-ee3323a494a1",
+              "name": "Minimum Stock",
+              "value": 10,
+              "type": "number"
+            },
+            {
+              "id": "371abb2d-c913-47d8-bd38-f85a96a29181",
+              "name": "Cost price ",
+              "value": 200,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        -32
+      ],
+      "id": "a3fdddae-bf8d-4f48-9776-239a216027db",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "35e9f8d9-84d4-4d30-bc10-2954e6f22750",
+              "leftValue": "={{$json[\"Stock\"]}}",
+              "rightValue": "={{$json[\"Minimum Stock\"]}}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        352,
+        48
+      ],
+      "id": "583be04a-55c0-4d29-9c87-f5a6898941c7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an inventory assistant for a small retail shop.\n\nProduct name: {{$json[\"Product name\"]}}\nCurrent stock: {{$json[\"Stock\"]}}\nMinimum required stock: {{$json[\"Minimum Stock\"]}}\n\nCheck if the stock is low.\nIf yes, suggest how many units should be reordered.\nGive a short and clear answer.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an AI inventory management assistant for a small retail business. Your role is to evaluate stock levels and provide clear, practical reorder recommendations. Keep responses concise and business-oriented."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        576,
+        -48
+      ],
+      "id": "a7ad3a53-b7e9-43e0-9da4-3a58e8592508",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5-coder:7b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        720,
+        176
+      ],
+      "id": "d8b279ca-e82a-4e18-8a65-935442df454e",
+      "name": "Ollama Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "fgtmq7wBjacIjPM0",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "6009099707",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        928,
+        -48
+      ],
+      "id": "0299adbb-1528-4278-8bdf-298b49e491d8",
+      "name": "Send a text message",
+      "webhookId": "9df3db4b-17ca-4552-810c-1fdf46cff875",
+      "credentials": {
+        "telegramApi": {
+          "id": "12Iiu0pOgB2VwGuQ",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1e5f4c60-6191-4a5d-88cc-c6a3c2bfc111",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2d8077f051418ac6c976007bf7e17d80147531b0f9393fd0696536fbed8ca97b"
+  },
+  "id": "OWNV1SGVZkmnJu6RfrJu4",
+  "tags": []
+}
